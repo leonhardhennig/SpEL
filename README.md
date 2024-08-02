@@ -176,7 +176,7 @@ The following snippet demonstrates a quick way that SpEL can be used to generate
 
 ```python
 from transformers import AutoTokenizer
-from spel.model import SpELAnnotator
+from spel.model import SpELAnnotator, dl_sa
 from spel.configuration import device
 from spel.utils import get_subword_to_word_mapping
 from spel.span_annotation import WordAnnotation, PhraseAnnotation
@@ -196,6 +196,8 @@ subword_annotations = spel.annotate_subword_ids(inputs.input_ids, k_for_top_k_to
 # #################################### CREATE WORD-LEVEL ANNOTATIONS ##################################################
 tokens_offsets = token_offsets[1:-1]
 subword_annotations = subword_annotations[1:]
+for sa in subword_annotations:
+    sa.idx2tag = dl_sa.mentions_itos
 word_annotations = [WordAnnotation(subword_annotations[m[0]:m[1]], tokens_offsets[m[0]:m[1]])
                     for m in get_subword_to_word_mapping(inputs.tokens(), sentence)]
 # ################################## CREATE PHRASE-LEVEL ANNOTATIONS ##################################################
@@ -207,6 +209,9 @@ for w in word_annotations:
         phrase_annotations[-1].add(w)
     else:
         phrase_annotations.append(PhraseAnnotation(w))
+# ################################## PRINT OUT THE CREATED ANNOTATIONS ################################################
+for phrase_annotation in phrase_annotations:
+   print(dl_sa.mentions_itos[phrase_annotation.resolved_annotation])
 ```
 
 ### Entity linking evaluation using GERBIL:
