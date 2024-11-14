@@ -92,6 +92,7 @@ def generic_annotate(nif_bytes, load_aida_finetuned, kb_prefix, load_full_vocabu
         gerbil_query_count += 1
         print("Received query number {} from gerbil!".format(gerbil_query_count))
         with lock:
+            print("Request: " + parsed_collection.nif_str() + "\n\n")
             annotator.annotate(parsed_collection, ignore_non_aida_vocab=not load_full_vocabulary, kb_prefix=kb_prefix,
                                candidates_manager=candidates_manager_to_use)
     else:
@@ -110,6 +111,7 @@ def generic_annotate(nif_bytes, load_aida_finetuned, kb_prefix, load_full_vocabu
     try:
         res = parsed_collection.nif_str(format='turtle')
         res_json = extract_dump_res_json(parsed_collection)
+        print("Response: " + json.dumps(res_json, ensure_ascii=False, indent=2) + "\n\n")
         annotate_result.append(res_json)
         return res
     except Exception:
