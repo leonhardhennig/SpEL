@@ -1,7 +1,7 @@
 """
 Data structure classes required and used for multiple levels of granularity in spans.
 """
-from spel.data_loader import dl_sa
+from data_loader import dl_sa
 from mosestokenizer import MosesDetokenizer
 detokenize = MosesDetokenizer('en')
 

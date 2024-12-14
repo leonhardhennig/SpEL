@@ -1,6 +1,6 @@
 import os
 import zipfile
-from spel.configuration import get_aida_yago_tsv_file_path, get_resources_dir
+from configuration import get_aida_yago_tsv_file_path, get_resources_dir
 
 TRAIN_START_LINE = "-DOCSTART- (1 EU)"
 TESTA_START_LINE = "-DOCSTART- (947testa CRICKET)"

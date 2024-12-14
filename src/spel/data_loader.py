@@ -46,7 +46,7 @@ from torchtext.utils import download_from_url
 
 from transformers import AutoTokenizer, BatchEncoding
 
-from spel.configuration import (get_aida_plus_wikipedia_plus_out_of_domain_vocab, get_aida_train_canonical_redirects,
+from configuration import (get_aida_plus_wikipedia_plus_out_of_domain_vocab, get_aida_train_canonical_redirects,
                                 get_aida_vocab, get_ood_vocab, get_checkpoints_dir, get_base_model_name, device)
 
 BERT_MODEL_NAME = get_base_model_name()

@@ -161,3 +161,7 @@ cython_debug/
 /resources/data/AIDA-YAGO2-dataset.tsv
 .logdir/
 .checkpoints/
+
+src/spel/model_step_2/spel-base-step-2.pt
+
+src/spel/spel_train_ft/train_format.json

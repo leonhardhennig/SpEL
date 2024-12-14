@@ -15,12 +15,12 @@ import torch.nn as nn
 from torch import optim
 from tqdm import tqdm
 
-from spel.utils import store_validation_data_wiki, chunk_annotate_and_merge_to_phrase, \
+from utils import store_validation_data_wiki, chunk_annotate_and_merge_to_phrase, \
     get_aida_set_phrase_splitted_documents, compare_gold_and_predicted_annotation_documents
-from spel.decao_eval import EntityEvaluationScores, InOutMentionEvaluationResult
-from spel.span_annotation import SubwordAnnotation
-from spel.data_loader import BERT_MODEL_NAME, dl_sa, tokenizer
-from spel.configuration import get_checkpoints_dir, get_aida_train_canonical_redirects, get_ood_canonical_redirects, \
+from decao_eval import EntityEvaluationScores, InOutMentionEvaluationResult
+from span_annotation import SubwordAnnotation
+from data_loader import BERT_MODEL_NAME, dl_sa, tokenizer
+from configuration import get_checkpoints_dir, get_aida_train_canonical_redirects, get_ood_canonical_redirects, \
     get_logdir_dir, get_exec_run_file
 
 class SpELAnnotator:

@@ -10,10 +10,10 @@ import string
 from enum import Enum
 from tqdm import tqdm
 
-from spel.data_loader import get_dataset, tokenizer, dl_sa
-from spel.span_annotation import SubwordAnnotation, WordAnnotation, PhraseAnnotation
-from spel.aida import AIDADataset
-from spel.configuration import get_resources_dir
+from data_loader import get_dataset, tokenizer, dl_sa
+from span_annotation import SubwordAnnotation, WordAnnotation, PhraseAnnotation
+from aida import AIDADataset
+from configuration import get_resources_dir
 from mosestokenizer import MosesTokenizer, MosesPunctuationNormalizer
 moses_tokenize = MosesTokenizer('en', old_version=True)
 normalize = MosesPunctuationNormalizer('en')

@@ -14,9 +14,9 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
-from spel.model import SpELAnnotator
-from spel.data_loader import get_dataset
-from spel.configuration import device
+from model import SpELAnnotator
+from data_loader import get_dataset
+from configuration import device
 
 TRACK_WITH_WANDB = True
 if TRACK_WITH_WANDB:
@@ -28,17 +28,27 @@ class FinetuneS3(SpELAnnotator):
         super(FinetuneS3, self).__init__()
 
     def finetune(self, checkpoint_name, n_epochs, batch_size, bert_dropout=0.2, encoder_lr=5e-5, label_size=8196,
-                 accumulate_batch_gradients=4,  exclude_parameter_names_regex='embeddings|encoder\\.layer\\.[0-2]\\.',
-                 eval_batch_size=1):
+                 accumulate_batch_gradients=4, exclude_parameter_names_regex='embeddings|encoder\\.layer\\.[0-2]\\.',
+                 eval_batch_size=1, dataset_name='aida', custom_dataset_path=None, model_folder=None):
         self.init_model_from_scratch(device=device)
-        if checkpoint_name is None:
+
+        # Load the model from a specific folder
+        if model_folder:
+            print(f"Loading model from folder: {model_folder}")
+            checkpoint_path = os.path.join(model_folder, "spel-base-step-2.pt")
+            state_dict = torch.load(checkpoint_path, map_location=device)
+            self.bert_lm.load_state_dict(state_dict)
+        elif checkpoint_name is None:
             self.load_checkpoint(None, device=device, load_from_torch_hub=True, finetuned_after_step=2)
             checkpoint_name = 'enwiki_finetuned_step_2_model_checkpoint'
         else:
             self.load_checkpoint(checkpoint_name, device=device)
+
         self.shrink_classification_head_to_aida(device=device)
         if label_size > self.out_module.num_embeddings:
             label_size = self.out_module.num_embeddings
+
+        # Initialize Weights & Biases
         if TRACK_WITH_WANDB:
             wandb.init(
                 project="spel-finetune-step-3",
@@ -54,25 +64,43 @@ class FinetuneS3(SpELAnnotator):
                     "eval_batch_size": eval_batch_size
                 }
             )
+
         self.bert_lm.train()
         self.out.train()
         if bert_dropout > 0:
             for m in self.bert_lm.modules():
                 if isinstance(m, torch.nn.Dropout):
                     m.p = bert_dropout
+
         optimizers = self.create_optimizers(encoder_lr, 0.0, exclude_parameter_names_regex)
         criterion = nn.BCEWithLogitsLoss()
         best_f1 = 0.0
+
+        # Dataset initialization
+        if dataset_name == 'custom' and custom_dataset_path:
+            data_loader = load_custom_dataset(
+                file_path=custom_dataset_path,
+                batch_size=batch_size,
+                tokenizer=self.tokenizer,
+                max_length=512
+            )
+        else:
+            data_loader = get_dataset(
+                dataset_name=dataset_name,
+                split='train',
+                batch_size=batch_size,
+                label_size=label_size,
+                get_labels_with_high_model_score=self.get_highest_confidence_model_predictions
+            )
+
+        _iter_ = tqdm(enumerate(data_loader))
+
+        # Training loop
         for epoch in range(n_epochs):
             print(f"Beginning fine-tune epoch {epoch} ...")
-            _iter_ = tqdm(enumerate(
-                get_dataset(dataset_name='aida', split='train', batch_size=batch_size, label_size=label_size,
-                            get_labels_with_high_model_score=self.get_highest_confidence_model_predictions)
-            ))
             total_loss = 0
             cnt_loss = 0
             for iter_, (inputs, subword_mentions) in _iter_:
-                # inputs.eval_mask, subword_mentions.dictionary, inputs.raw_mentions are not used!
                 subword_mentions_probs = subword_mentions.probs.to(device)
                 logits = self.get_model_raw_logits_training(
                     inputs.token_ids.to(device), subword_mentions.ids.to(device), subword_mentions_probs)
@@ -133,8 +161,17 @@ class FinetuneS3(SpELAnnotator):
 if __name__ == '__main__':
     try:
         b_annotator = FinetuneS3()
-        b_annotator.finetune(checkpoint_name=None, n_epochs=60, batch_size=10, bert_dropout=0.2, label_size=10240,
-                             eval_batch_size=2)
+        b_annotator.finetune(
+            checkpoint_name=None, 
+            n_epochs=60, 
+            batch_size=10, 
+            bert_dropout=0.2, 
+            label_size=10240,
+            eval_batch_size=2,
+            dataset_name='custom',  # Specify 'custom' to use your dataset
+            custom_dataset_path='spel_train_ft/train_format.json',  # Replace with your dataset path
+            model_folder='model_step_2'  # Replace with your model folder path
+        )
     finally:
         if TRACK_WITH_WANDB:
             wandb.finish()
